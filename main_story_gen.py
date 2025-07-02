@@ -92,10 +92,14 @@ def auto_detect_type(keyword):
         type_str = "main_story"
     return type_str
 
-def log_api_interaction(call_type, prompt, response):
-    log_dir = "logs"
-    os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, "deepseek_api.log")
+def log_api_interaction(call_type, prompt, response, output_dir=None):
+    if output_dir is None:
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True)
+        log_file = os.path.join(log_dir, "deepseek_api.log")
+    else:
+        os.makedirs(output_dir, exist_ok=True)
+        log_file = os.path.join(output_dir, "deepseek_api.log")
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(f"\n==== {datetime.now()} ====")
         f.write(f"\n[TYPE] {call_type}")
@@ -104,7 +108,7 @@ def log_api_interaction(call_type, prompt, response):
         f.write("\n" + "="*40 + "\n")
 
 # DeepSeek API统一调用
-def call_deepseek_api(prompt, call_type="unknown"):
+def call_deepseek_api(prompt, call_type="unknown", output_dir=None):
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
         "Content-Type": "application/json"
@@ -124,7 +128,7 @@ def call_deepseek_api(prompt, call_type="unknown"):
     response = requests.post(DEEPSEEK_API_URL, headers=headers, json=data)
     response.raise_for_status()
     content = response.json()["choices"][0]["message"]["content"]
-    log_api_interaction(call_type, prompt, content)
+    log_api_interaction(call_type, prompt, content, output_dir=output_dir)
     return content
 
 # 主线剧情+结构化章节-场景-镜头生成
@@ -190,7 +194,7 @@ def get_deepseek_animation(keyword, characters=None):
     return call_deepseek_api(prompt, call_type="animation")
 
 # UI生成
-def get_deepseek_ui(keyword, scenes=None):
+def get_deepseek_ui(keyword, scenes=None, output_dir=None):
     context = f"场景信息：{scenes}\n" if scenes else ""
     prompt = (
         f"{context}请基于上述场景设定和'{keyword}'为主题，生成适用于叙事类游戏的UI组件结构。"
@@ -201,7 +205,7 @@ def get_deepseek_ui(keyword, scenes=None):
         "  ]\n}"
         "要求：至少生成5个UI组件，风格多样，所有描述为中文。"
     )
-    return call_deepseek_api(prompt, call_type="ui")
+    return call_deepseek_api(prompt, call_type="ui", output_dir=output_dir)
 
 # 副本/玩法机制生成
 def get_deepseek_instance(keyword, main_story=None):
@@ -465,7 +469,7 @@ def main():
                 if chapter.get("scenes"):
                     scenes.extend(chapter["scenes"])
             scenes_str = json.dumps(scenes, ensure_ascii=False)
-        result = get_deepseek_ui(keyword, scenes=scenes_str)
+        result = get_deepseek_ui(keyword, scenes=scenes_str, output_dir=output_dir)
         result = extract_json(result)
         ui_data = json.loads(result)
         with open(os.path.join(output_dir, "ui.json"), "w", encoding="utf-8") as f:
