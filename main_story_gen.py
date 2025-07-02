@@ -6,6 +6,7 @@ import os
 import time
 from config import DEEPSEEK_API_KEY, DEEPSEEK_API_URL
 import logging
+from datetime import datetime
 
 SUPPORTED_TYPES = ["main_story", "character", "scene", "shot", "animation", "ui", "instance"]
 
@@ -91,8 +92,19 @@ def auto_detect_type(keyword):
         type_str = "main_story"
     return type_str
 
+def log_api_interaction(call_type, prompt, response):
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "deepseek_api.log")
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(f"\n==== {datetime.now()} ====")
+        f.write(f"\n[TYPE] {call_type}")
+        f.write(f"\n[PROMPT]\n{prompt}")
+        f.write(f"\n[RESPONSE] (length={len(response) if response else 0})\n{response}")
+        f.write("\n" + "="*40 + "\n")
+
 # DeepSeek API统一调用
-def call_deepseek_api(prompt):
+def call_deepseek_api(prompt, call_type="unknown"):
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
         "Content-Type": "application/json"
@@ -111,7 +123,9 @@ def call_deepseek_api(prompt):
     }
     response = requests.post(DEEPSEEK_API_URL, headers=headers, json=data)
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    content = response.json()["choices"][0]["message"]["content"]
+    log_api_interaction(call_type, prompt, content)
+    return content
 
 # 主线剧情+结构化章节-场景-镜头生成
 def get_deepseek_story_structure(keyword, genre_hint=None):
@@ -145,7 +159,7 @@ def get_deepseek_story_structure(keyword, genre_hint=None):
         "}\n"
         "要求：所有字段必须有，内容具体、细节丰富，不能用省略号、示例或'等'字样代替真实内容。章节不少于5个，每章场景不少于3个，每场景镜头不少于2个。所有描述均为中文。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="main_story_structure")
 
 # 角色生成
 def get_deepseek_character(keyword, main_story=None):
@@ -159,7 +173,7 @@ def get_deepseek_character(keyword, main_story=None):
         "  ]\n}"
         "要求：至少生成4个主要角色，性格、背景、关系各异，所有描述为中文。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="character")
 
 # 动画生成
 def get_deepseek_animation(keyword, characters=None):
@@ -173,7 +187,7 @@ def get_deepseek_animation(keyword, characters=None):
         "  ]\n}"
         "要求：每个动画都要有工程化字段，desc为文学性描述，其余字段便于动画师/程序直接落地。至少生成6个动画，类型多样，所有描述为中文。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="animation")
 
 # UI生成
 def get_deepseek_ui(keyword, scenes=None):
@@ -187,7 +201,7 @@ def get_deepseek_ui(keyword, scenes=None):
         "  ]\n}"
         "要求：至少生成5个UI组件，风格多样，所有描述为中文。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="ui")
 
 # 副本/玩法机制生成
 def get_deepseek_instance(keyword, main_story=None):
@@ -201,7 +215,7 @@ def get_deepseek_instance(keyword, main_story=None):
         "  ]\n}"
         "要求：至少生成3种机制，内容丰富，所有描述为中文。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="instance")
 
 # 角色外观与AI绘图prompt生成
 def get_deepseek_character_appearance(keyword, characters=None):
@@ -215,7 +229,7 @@ def get_deepseek_character_appearance(keyword, characters=None):
         "  ]\n}"
         "要求：appearance为中文，prompt为适合AI绘图的英文描述，内容具体、风格多样。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="character_appearance")
 
 # 互动机制生成
 def get_deepseek_interaction_mechanics(keyword, scene=None, main_story=None):
@@ -235,7 +249,7 @@ def get_deepseek_interaction_mechanics(keyword, scene=None, main_story=None):
         "  ]\n}"
         "要求：机制类型、描述、选项、后果、与剧情的关联都要具体，内容必须和本场景及主线剧情高度相关，所有描述为中文。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="interaction")
 
 # 剧情分支/决策点生成
 def get_deepseek_story_branches(keyword, scene=None, main_story=None):
@@ -255,7 +269,7 @@ def get_deepseek_story_branches(keyword, scene=None, main_story=None):
         "  ]\n}"
         "要求：每个分支点都要有决策描述、选项、后续场景编号、影响说明，内容必须和本场景及主线剧情高度相关，所有描述为中文。"
     )
-    return call_deepseek_api(prompt)
+    return call_deepseek_api(prompt, call_type="branch")
 
 def parse_story_structure_and_generate_scene_details(story_structure, character_list, animation_list, appearance_list, ui_list, output_dir, keyword=None, main_story=None):
     scenes_details = []
