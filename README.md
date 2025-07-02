@@ -67,29 +67,34 @@ python main_story_gen.py "极速重生"
 - **逻辑层**：副本机制、剧情推进、分支选择、互动逻辑（如 story_instances.json、scenes_details.json 中的分支与条件）
 
 ### 推荐设计流程
+
 ```mermaid
 graph TD
-  A[世界观与主线梳理] --> B[角色与场景设定]
-  B --> C[资源需求清单与生成]
-  C --> D[UI与交互设计]
-  D --> E[副本与玩法机制]
-  E --> F[数据联动与自动化]
-  F --> G[集成与测试]
+  A[输入关键词/主题] --> B[AI生成主线剧情 main_story.json]
+  B --> C[AI生成章节-场景-镜头结构 story_structure.json]
+  C --> D[AI生成角色/动画/UI/玩法等资源]
+  D --> E[AI为每个场景生成互动机制/分支决策]
+  E --> F[聚合生成 scenes_details.json（含互动、分支、结局等）]
+  F --> G[归档输出/可视化/引擎集成]
 ```
 
 ## 数据结构关系图
+
 ```mermaid
 graph TD
   MainStory[main_story.json] -->|驱动| StoryStruct[story_structure.json]
-  StoryStruct -->|包含| SceneDetail[scenes_details.json]
+  StoryStruct -->|索引| SceneDetail[scenes_details.json]
   SceneDetail -->|分解为| Shot
   Character[character.json] -->|参与| SceneDetail
   CharacterAppearance[character_appearance.json] -->|生成| PNG[图片资源]
   UI[ui.json] -->|可视化呈现| SceneDetail
   Animation[animation.json] -->|增强表现| SceneDetail
   Instance[story_instances.json] -->|扩展玩法| MainStory
+  SceneDetail -->|包含| Interactions[互动机制]
+  SceneDetail -->|包含| Branches[分支决策]
+  SceneDetail -->|包含| Ending[结局触发]
   classDef box fill:#e6f3ff,stroke:#3399ff;
-  class MainStory,StoryStruct,SceneDetail,Shot,Character,CharacterAppearance,UI,Animation,Instance,PNG box;
+  class MainStory,StoryStruct,SceneDetail,Shot,Character,CharacterAppearance,UI,Animation,Instance,PNG,Interactions,Branches,Ending box;
 ```
 
 ## 资源命名与自动化建议
