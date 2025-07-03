@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>魔法世界卡牌收集册</title>
+    <style>
+        :root {
+            --card-width: 180px;
+            --card-height: 250px;
+        }
+        body {
+            margin: 0;
+            background: linear-gradient(120deg, #232526 0%, #414345 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.5s;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 32px 0 32px;
+            color: #ffe066;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .status-block {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .status-label {
+            color: #fff;
+            font-size: 1rem;
+            margin-right: 6px;
+        }
+        .collection-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 0 32px 0;
+        }
+        .background-loading {
+            position: fixed;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(120deg, #232526 0%, #414345 100%);
+            z-index: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffe066;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            transition: opacity 0.5s;
+        }
+        .background-img {
+            position: fixed;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            opacity: 0.7;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        .status-bar, .collection-container { position: relative; z-index: 2; }
+        .card-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            margin-top: 32px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .card {
+            width: var(--card-width);
+            height: var(--card-height);
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            cursor: pointer;
+            position: relative;
+            transition: box-shadow 0.3s, filter 0.3s, transform 0.3s cubic-bezier(.25,1.5,.5,1);
+        }
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(255,224,102,0.18);
+            transform: scale(1.04) translateY(-6px);
+        }
+        .card-front {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        .card-content {
+            background: rgba(255,255,255,0.85);
+            border-radius: 0 0 16px 16px;
+            padding: 10px 14px 8px 14px;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.08);
+        }
+        .card-content h3 {
+            margin: 0 0 4px 0;
+            font-size: 1.08rem;
+            color: #333;
+            letter-spacing: 1px;
+        }
+        .rarity {
+            font-size: 0.95rem;
+            color: #b8860b;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        .level {
+            font-size: 0.92rem;
+            color: #2196f3;
+            margin-bottom: 2px;
+        }
+        .desc {
+            font-size: 0.95rem;
+            color: #444;
+            margin-top: 2px;
+        }
+        .loading {
+            color: #bdbdbd;
+            font-size: 1rem;
+            text-align: center;
+            width: 100%;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            z-index: 2;
+        }
+        .btn-bar {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin: 32px 0 0 0;
+        }
+        .btn {
+            background: linear-gradient(90deg, #ffe066 60%, #ffb347 100%);
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.08);
+            transition: background 0.2s, transform 0.2s;
+        }
+        .btn:disabled {
+            background: #ccc;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .effect-float {
+            position: absolute;
+            left: 50%;
+            top: 30%;
+            transform: translate(-50%, -50%);
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ff5252;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 100;
+            text-shadow: 0 2px 8px #fff, 0 0 16px #ffe066;
+        }
+        .card-detail-modal {
+            position: fixed;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .card-detail {
+            background: #fff;
+            border-radius: 18px;
+            padding: 32px 28px 24px 28px;
+            min-width: 320px;
+            max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card-detail img {
+            width: 220px;
+            height: 320px;
+            border-radius: 16px;
+            object-fit: cover;
+            margin-bottom: 18px;
+        }
+        .close-btn {
+            position: absolute;
+            right: 24px;
+            top: 18px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #888;
+            cursor: pointer;
+        }
+        .upgrade-btn {
+            margin-top: 18px;
+            background: linear-gradient(90deg, #ffe066 60%, #ffb347 100%);
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.08);
+            transition: background 0.2s, transform 0.2s;
+        }
+        .upgrade-btn:disabled {
+            background: #ccc;
+            color: #888;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-loading" id="bg-loading">AI生成背景中...</div>
+    <img class="background-img" id="bg-img" style="display:none;" />
+    <div class="status-bar">
+        <div class="status-block">
+            <span class="status-label">金币</span>
+            <span id="gold">100</span>
+        </div>
+        <div class="status-block">
+            <button class="btn" id="draw-btn">抽卡（10金币）</button>
+        </div>
+    </div>
+    <div class="collection-container">
+        <div class="card-list" id="card-list"></div>
+        <div class="effect-float" id="effect-float"></div>
+    </div>
+    <script>
+    // 获取全局prompt
+    function getGlobalPrompt() {
+        const url = new URL(window.location.href);
+        return url.searchParams.get('prompt') || '';
+    }
+    const globalPrompt = getGlobalPrompt();
+
+    // 获取card_keywords
+    function getCardKeywords() {
+        const url = new URL(window.location.href);
+        const kw = url.searchParams.get('card_keywords');
+        if (!kw) return null;
+        return kw.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    // 稀有度
+    const RARITIES = [
+        { label: '普通', color: '#bdbdbd', prob: 0.6 },
+        { label: '稀有', color: '#2196f3', prob: 0.28 },
+        { label: '史诗', color: '#b8860b', prob: 0.1 },
+        { label: '传说', color: '#ff5252', prob: 0.02 }
+    ];
+    // 卡牌池
+    function buildCardPool(keywords) {
+        return keywords.map((name, i) => {
+            let desc = `一张以${name}为主题的魔法卡牌。`;
+            let prompt = `魔法世界${name}卡牌插画`;
+            return { name, desc, prompt };
+        });
+    }
+    const cardKeywords = getCardKeywords();
+    const CARD_POOL = cardKeywords ? buildCardPool(cardKeywords) : [
+        { name: '火球术', desc: '释放火焰的魔法卡牌。', prompt: '魔法世界火球术卡牌插画' },
+        { name: '治愈术', desc: '治愈伤口的魔法卡牌。', prompt: '魔法世界治愈术卡牌插画' },
+        { name: '冰锥术', desc: '召唤寒冰的魔法卡牌。', prompt: '魔法世界冰锥术卡牌插画' },
+        { name: '魔力激荡', desc: '魔力流转的魔法卡牌。', prompt: '魔法世界魔力激荡卡牌插画' },
+        { name: '闪电链', desc: '释放闪电的魔法卡牌。', prompt: '魔法世界闪电链卡牌插画' }
+    ];
+    // 状态
+    let gold = 100;
+    let collection = [];
+    // 卡牌结构：{ name, rarity, level, desc, img, prompt }
+
+    // 拼接卡牌图片prompt
+    function getCardPrompt(card) {
+        return (globalPrompt ? globalPrompt + ' ' : '') + card.prompt;
+    }
+
+    // 获取图片
+    async function fetchCardImage(card) {
+        try {
+            const resp = await fetch('http://localhost:8000/generate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: getCardPrompt(card) })
+            });
+            const data = await resp.json();
+            return data.url || '';
+        } catch {
+            return '';
+        }
+    }
+
+    // 获取背景图片
+    async function fetchBackgroundImage() {
+        const prompt = (globalPrompt ? globalPrompt + ' ' : '') + '魔法世界卡牌收集背景插画';
+        try {
+            const resp = await fetch('http://localhost:8000/generate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+            const data = await resp.json();
+            return data.url || '';
+        } catch {
+            return '';
+        }
+    }
+
+    // 设置背景图片
+    async function setBackground() {
+        const bgImg = document.getElementById('bg-img');
+        const bgLoading = document.getElementById('bg-loading');
+        bgImg.style.display = 'none';
+        bgLoading.style.opacity = 1;
+        const url = await fetchBackgroundImage();
+        if (url) {
+            bgImg.src = url;
+            bgImg.onload = () => {
+                bgImg.style.display = 'block';
+                bgLoading.style.opacity = 0;
+            };
+        } else {
+            bgLoading.innerText = '背景生成失败';
+        }
+    }
+    setBackground();
+
+    // 随机抽卡
+    async function drawCard() {
+        if (gold < 10) {
+            floatEffect('金币不足', '#ff5252');
+            return;
+        }
+        gold -= 10;
+        updateUI();
+        // 随机稀有度
+        let r = Math.random();
+        let rarity = RARITIES[0];
+        let acc = 0;
+        for (let i = 0; i < RARITIES.length; i++) {
+            acc += RARITIES[i].prob;
+            if (r < acc) { rarity = RARITIES[i]; break; }
+        }
+        // 随机卡牌
+        const idx = Math.floor(Math.random() * CARD_POOL.length);
+        const base = CARD_POOL[idx];
+        const card = {
+            name: base.name,
+            desc: base.desc,
+            prompt: base.prompt,
+            rarity: rarity.label,
+            rarityColor: rarity.color,
+            level: 1,
+            img: ''
+        };
+        floatEffect(`获得${rarity.label}卡！`, rarity.color);
+        // 预加载图片
+        card.img = '';
+        fetchCardImage(card).then(url => {
+            card.img = url;
+            updateUI();
+        });
+        collection.push(card);
+        updateUI();
+    }
+
+    // 卡牌升级
+    function upgradeCard(idx) {
+        const card = collection[idx];
+        if (gold < 20) {
+            floatEffect('金币不足', '#ff5252');
+            return;
+        }
+        gold -= 20;
+        card.level += 1;
+        floatEffect('升级成功！', '#4caf50');
+        updateUI();
+    }
+
+    // 展示卡牌详情
+    function showCardDetail(idx) {
+        const card = collection[idx];
+        const modal = document.createElement('div');
+        modal.className = 'card-detail-modal';
+        modal.innerHTML = `
+            <div class="card-detail">
+                <button class="close-btn" id="close-detail">×</button>
+                <img src="${card.img || ''}" alt="卡牌插画" />
+                <div class="rarity" style="color:${card.rarityColor}">${card.rarity}</div>
+                <div class="level">等级 Lv.${card.level}</div>
+                <h3>${card.name}</h3>
+                <div class="desc">${card.desc}</div>
+                <button class="upgrade-btn" id="upgrade-btn">升级（20金币）</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('close-detail').onclick = () => modal.remove();
+        document.getElementById('upgrade-btn').onclick = () => {
+            upgradeCard(idx);
+            modal.remove();
+        };
+    }
+
+    // 飘字动画
+    function floatEffect(text, color='#ff5252') {
+        const el = document.getElementById('effect-float');
+        el.innerText = text;
+        el.style.color = color;
+        el.style.opacity = 1;
+        el.style.display = 'block';
+        el.style.zIndex = 100;
+        el.animate([
+            { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+            { transform: 'translate(-50%, -90%) scale(1.2)', opacity: 0 }
+        ], { duration: 1100, easing: 'ease-out' });
+        setTimeout(() => { el.style.opacity = 0; }, 1100);
+    }
+
+    // 更新UI
+    function updateUI() {
+        document.getElementById('gold').innerText = gold;
+        // 卡牌列表
+        const list = document.getElementById('card-list');
+        list.innerHTML = '';
+        if (collection.length === 0) {
+            list.innerHTML = '<div style="color:#fff;font-size:1.2rem;margin-top:48px;">你还没有任何卡牌，快来抽卡吧！</div>';
+            return;
+        }
+        collection.forEach((card, idx) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.innerHTML = `
+                <div class="card-front" style="background:${card.img ? `url('${card.img}') center/cover` : '#eee'}">
+                    ${card.img ? '' : '<span class="loading">图片生成中...</span>'}
+                    <div class="card-content" style="position:absolute;bottom:0;width:100%;">
+                        <div class="rarity" style="color:${card.rarityColor}">${card.rarity}</div>
+                        <div class="level">Lv.${card.level}</div>
+                        <h3>${card.name}</h3>
+                    </div>
+                </div>
+            `;
+            cardEl.onclick = () => showCardDetail(idx);
+            list.appendChild(cardEl);
+        });
+    }
+
+    document.getElementById('draw-btn').onclick = drawCard;
+    updateUI();
+    </script>
+</body>
+</html> 
