@@ -54,6 +54,12 @@ function parseLinesToBlocks(lines, blocks) {
   for (let i = 0; i < lines.length; i++) {
     let l = lines[i].trim();
     if (!l || l.startsWith('//')) continue;
+    
+    // 新增：跳过Ink变量声明和逻辑代码
+    if (l.startsWith('VAR ') || l.startsWith('~ ') || l.match(/^\{.*:/) || l.match(/^-\s*else\s*:/) || l === '}') {
+      continue;
+    }
+    
     // 新增：支持=== 节点名 ===作为scene
     if (/^===\s*.+\s*===/.test(l)) {
       blocks.push({ type: 'scene', text: l.replace(/^=+|=+$/g, '').trim() });
@@ -61,6 +67,7 @@ function parseLinesToBlocks(lines, blocks) {
     }
     if (l.startsWith('##')) { blocks.push({ type: 'scene', text: l.replace(/^#+/, '').trim() }); continue; }
     if (l.startsWith('#')) { blocks.push({ type: 'scene', text: l.replace(/^#+/, '').trim() }); continue; }
+    
     // 分支组解析
     if (l.startsWith('* ')) {
       // 连续收集所有* 选项 + -> 跳转
@@ -79,7 +86,12 @@ function parseLinesToBlocks(lines, blocks) {
       i--; // while多加了一次
       continue;
     }
-    if (l.startsWith('->')) { blocks.push({ type: 'ending', text: l.replace('->', '').trim() }); continue; }
+    
+    if (l.startsWith('->')) { 
+      blocks.push({ type: 'jump', text: l.replace('->', '').trim() }); 
+      continue; 
+    }
+    
     if (l.startsWith('@bgm')) { blocks.push({ type: 'bgm', text: l }); continue; }
     if (l.startsWith('@sfx')) { blocks.push({ type: 'sfx', text: l }); continue; }
     if (l.startsWith('@achievement')) { blocks.push({ type: 'achievement', text: l }); continue; }
@@ -221,15 +233,19 @@ export default function App() {
           }
         }
       });
-      // 只包含变量赋值和一个ending跳转，自动跳转
-      const onlyEnding = nonAssign.length === 1 && nonAssign[0].type === 'ending';
-      if (onlyEnding) {
-        const target = nonAssign[0].text.trim();
-        const nextIdx = blocks.findIndex(b => b.type === 'scene' && b.text.trim() === target);
-        if (nextIdx !== -1) {
-          idx = nextIdx;
-          setCurrentSceneIdx(nextIdx);
-          continue;
+      // 自动跳转逻辑：如果只有jump跳转或变量赋值+jump跳转
+      const jumpBlocks = sceneBlocks.filter(b => b.type === 'jump');
+      const hasAutoJump = jumpBlocks.length === 1 && (nonAssign.length === 1 || nonAssign.every(b => b.type === 'jump'));
+      
+      if (hasAutoJump) {
+        const target = jumpBlocks[0].text.trim();
+        if (target && target !== 'END') {
+          const nextIdx = blocks.findIndex(b => b.type === 'scene' && b.text.trim() === target);
+          if (nextIdx !== -1) {
+            idx = nextIdx;
+            setCurrentSceneIdx(nextIdx);
+            continue;
+          }
         }
       }
       break;
@@ -238,12 +254,12 @@ export default function App() {
     // eslint-disable-next-line
   }, [currentSceneIdx, inkplus]);
 
-  // 预览区：只渲染当前scene及其后内容，遇到下一个scene/ending/分支组时停止
+  // 预览区：只渲染当前scene及其后内容，遇到下一个scene/jump/分支组时停止
   const currentBlocks = [];
   let i = currentSceneIdx;
   while (i < blocks.length) {
     const b = blocks[i];
-    if (i !== currentSceneIdx && (b.type === 'scene' || b.type === 'ending')) break;
+    if (i !== currentSceneIdx && (b.type === 'scene' || b.type === 'jump')) break;
     currentBlocks.push(b);
     if (b.type === 'choice') {
       // 收集本组所有choice
@@ -254,7 +270,7 @@ export default function App() {
       }
       break;
     }
-    if (b.type === 'ending') {
+    if (b.type === 'jump') {
       break;
     }
     i++;
@@ -400,7 +416,7 @@ export default function App() {
                       </div>
                     );
                   }
-                  if (b.type === 'ending') return <div key={idx} style={{color:'#007aff',marginTop:16}}>{b.text}</div>;
+                  if (b.type === 'jump') return null; // 跳转不显示，由自动跳转逻辑处理
                   if (b.type === 'achievement') return <div key={idx} style={{color:'#ffb300',margin:'8px 0'}}>🏆 成就达成！</div>;
                   if (b.type === 'bgm') return <div key={idx} style={{color:'#4ecdc4',fontSize:12,margin:'4px 0'}}>🎵 背景音乐：{b.text}</div>;
                   if (b.type === 'sfx') return <div key={idx} style={{color:'#888',fontSize:12,margin:'4px 0'}}>🔊 音效：{b.text}</div>;
