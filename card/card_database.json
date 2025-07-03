@@ -1,0 +1,323 @@
+{
+  "card_database": {
+    "version": "1.0",
+    "total_cards": 60,
+    "last_updated": "2024-12-19",
+    
+    "action_cards": [
+      {
+        "id": "act_001",
+        "name": "勇敢冲锋",
+        "type": "战斗",
+        "cost": 2,
+        "rarity": "common",
+        "effect": "勇气+2，生命值-1",
+        "description": "不畏危险，直面挑战",
+        "flavor_text": "真正的勇气不是没有恐惧，而是面对恐惧时依然前行。",
+        "compatible_scenes": ["战斗", "冲突", "危机"],
+        "unlock_condition": "courage >= 1"
+      },
+      {
+        "id": "act_002",
+        "name": "巧妙潜行",
+        "type": "探索",
+        "cost": 1,
+        "rarity": "common",
+        "effect": "获得情报+1，避免冲突",
+        "description": "悄无声息地收集信息",
+        "flavor_text": "有时候，观察比行动更有价值。",
+        "compatible_scenes": ["探索", "调查", "潜入"],
+        "unlock_condition": "none"
+      },
+      {
+        "id": "act_003",
+        "name": "魔法治愈",
+        "type": "支援",
+        "cost": 3,
+        "rarity": "rare",
+        "effect": "生命值+3，友情+1",
+        "description": "用魔法治愈伤痛",
+        "flavor_text": "治愈的不仅是身体，更是心灵。",
+        "compatible_scenes": ["战斗后", "帮助", "医疗"],
+        "unlock_condition": "magic_skill >= 2"
+      },
+      {
+        "id": "act_004",
+        "name": "智慧分析",
+        "type": "思考",
+        "cost": 1,
+        "rarity": "common",
+        "effect": "预览下一个选择的后果",
+        "description": "仔细思考各种可能性",
+        "flavor_text": "智者千虑，必有一得。",
+        "compatible_scenes": ["选择", "谜题", "策略"],
+        "unlock_condition": "intelligence >= 2"
+      },
+      {
+        "id": "act_005",
+        "name": "激励演说",
+        "type": "社交",
+        "cost": 2,
+        "rarity": "uncommon",
+        "effect": "团队士气+2，友情+1",
+        "description": "用言语鼓舞伙伴",
+        "flavor_text": "言语的力量有时比剑更锋利。",
+        "compatible_scenes": ["团队", "演讲", "说服"],
+        "unlock_condition": "charisma >= 3"
+      },
+      {
+        "id": "act_006",
+        "name": "冷静观察",
+        "type": "探索",
+        "cost": 1,
+        "rarity": "common",
+        "effect": "发现隐藏线索",
+        "description": "仔细观察周围环境",
+        "flavor_text": "细节决定成败。",
+        "compatible_scenes": ["调查", "探索", "解谜"],
+        "unlock_condition": "perception >= 2"
+      }
+    ],
+    
+    "character_cards": [
+      {
+        "id": "char_001",
+        "name": "艾琳",
+        "type": "伙伴",
+        "rarity": "rare",
+        "ability": "每回合友情+1",
+        "special": "危机时可以代替主角承受伤害",
+        "description": "忠诚的朋友，总是在你需要时出现",
+        "flavor_text": "友情是最珍贵的宝物。",
+        "stats": {
+          "loyalty": 5,
+          "courage": 3,
+          "healing": 4
+        },
+        "compatible_stories": ["友情", "冒险", "成长"]
+      },
+      {
+        "id": "char_002",
+        "name": "莱奥",
+        "type": "伙伴",
+        "rarity": "rare",
+        "ability": "战斗时勇气+2",
+        "special": "可以发起团队攻击",
+        "description": "勇敢的战士，从不退缩",
+        "flavor_text": "勇气是面对恐惧的唯一方式。",
+        "stats": {
+          "strength": 5,
+          "courage": 5,
+          "leadership": 3
+        },
+        "compatible_stories": ["战斗", "冒险", "英雄"]
+      },
+      {
+        "id": "char_003",
+        "name": "米拉",
+        "type": "伙伴",
+        "rarity": "rare",
+        "ability": "探索时神秘+1",
+        "special": "可以解开魔法谜题",
+        "description": "神秘的魔法师，掌握古老的秘密",
+        "flavor_text": "知识就是力量。",
+        "stats": {
+          "magic": 5,
+          "intelligence": 4,
+          "mystery": 5
+        },
+        "compatible_stories": ["魔法", "神秘", "探索"]
+      },
+      {
+        "id": "char_004",
+        "name": "智者导师",
+        "type": "指导者",
+        "rarity": "legendary",
+        "ability": "可以预览即将到来的事件",
+        "special": "提供关键剧情提示",
+        "description": "经验丰富的导师，总能给出明智的建议",
+        "flavor_text": "经验是最好的老师。",
+        "stats": {
+          "wisdom": 5,
+          "guidance": 5,
+          "foresight": 4
+        },
+        "compatible_stories": ["成长", "学习", "冒险"]
+      }
+    ],
+    
+    "event_cards": [
+      {
+        "id": "event_001",
+        "name": "暴风雨",
+        "type": "环境",
+        "rarity": "common",
+        "effect": "所有行动成本+1",
+        "duration": "本回合",
+        "description": "突如其来的暴风雨让行动变得困难",
+        "flavor_text": "风雨无阻，方显英雄本色。",
+        "trigger_conditions": ["户外", "探索", "旅行"]
+      },
+      {
+        "id": "event_002",
+        "name": "意外发现",
+        "type": "机遇",
+        "rarity": "uncommon",
+        "effect": "抽取2张额外卡牌",
+        "description": "意外的发现带来新的机会",
+        "flavor_text": "机遇总是青睐有准备的人。",
+        "trigger_conditions": ["探索", "调查", "搜索"]
+      },
+      {
+        "id": "event_003",
+        "name": "友情的力量",
+        "type": "正面",
+        "rarity": "rare",
+        "effect": "本回合所有友情相关行动效果翻倍",
+        "description": "伙伴之间的深厚友情激发出强大力量",
+        "flavor_text": "一个人可以走得很快，但一群人可以走得更远。",
+        "trigger_conditions": ["友情 >= 3", "团队行动"]
+      },
+      {
+        "id": "event_004",
+        "name": "魔法共鸣",
+        "type": "魔法",
+        "rarity": "rare",
+        "effect": "本回合魔法类卡牌成本-1",
+        "description": "魔法能量在空气中共鸣",
+        "flavor_text": "魔法的奥秘在于和谐。",
+        "trigger_conditions": ["魔法环境", "神秘 >= 2"]
+      },
+      {
+        "id": "event_005",
+        "name": "危机时刻",
+        "type": "挑战",
+        "rarity": "uncommon",
+        "effect": "必须在2回合内解决，否则失败",
+        "description": "紧急情况需要立即行动",
+        "flavor_text": "危机中见真章。",
+        "trigger_conditions": ["冲突", "危险", "时间限制"]
+      }
+    ],
+    
+    "choice_cards": [
+      {
+        "id": "choice_001",
+        "name": "拯救还是逃跑",
+        "type": "道德选择",
+        "rarity": "story_critical",
+        "description": "伙伴陷入危险，你必须做出选择",
+        "options": [
+          {
+            "choice": "拯救伙伴",
+            "effect": "友情+3，生命值-2",
+            "next_scene": "rescue_scene",
+            "long_term_effect": "获得伙伴的绝对信任"
+          },
+          {
+            "choice": "战略撤退",
+            "effect": "保存实力，友情-1",
+            "next_scene": "retreat_scene",
+            "long_term_effect": "伙伴关系受到影响"
+          }
+        ],
+        "flavor_text": "真正的友情在危难时刻才见真章。"
+      },
+      {
+        "id": "choice_002",
+        "name": "力量还是智慧",
+        "type": "能力选择",
+        "rarity": "story_critical",
+        "description": "面对强大的对手，选择你的应对方式",
+        "options": [
+          {
+            "choice": "正面对抗",
+            "effect": "勇气+2，可能受重伤",
+            "next_scene": "battle_scene",
+            "long_term_effect": "获得战士的尊重"
+          },
+          {
+            "choice": "智取",
+            "effect": "智慧+2，需要更多时间",
+            "next_scene": "strategy_scene",
+            "long_term_effect": "获得智者的认可"
+          }
+        ],
+        "flavor_text": "不同的道路通向不同的命运。"
+      },
+      {
+        "id": "choice_003",
+        "name": "秘密的抉择",
+        "type": "信息选择",
+        "rarity": "story_critical",
+        "description": "你发现了一个重要秘密",
+        "options": [
+          {
+            "choice": "告诉伙伴",
+            "effect": "友情+2，可能带来危险",
+            "next_scene": "reveal_scene",
+            "long_term_effect": "团队更加团结"
+          },
+          {
+            "choice": "保守秘密",
+            "effect": "神秘+2，承受心理压力",
+            "next_scene": "secret_scene",
+            "long_term_effect": "获得独特的力量"
+          }
+        ],
+        "flavor_text": "有些秘密的重量超乎想象。"
+      }
+    ],
+    
+    "special_cards": [
+      {
+        "id": "special_001",
+        "name": "命运转折",
+        "type": "奇迹",
+        "rarity": "legendary",
+        "cost": 0,
+        "effect": "重新抽取本回合的所有选择",
+        "description": "命运给了你第二次机会",
+        "flavor_text": "有时候，命运会眷顾勇敢的人。",
+        "usage_limit": "每个故事只能使用一次",
+        "unlock_condition": "面临绝境时"
+      },
+      {
+        "id": "special_002",
+        "name": "真情告白",
+        "type": "情感",
+        "rarity": "legendary",
+        "cost": 3,
+        "effect": "与选定角色的友情值直接设为最大",
+        "description": "真诚的话语打动人心",
+        "flavor_text": "真情是最强大的魔法。",
+        "usage_limit": "每个角色只能使用一次",
+        "unlock_condition": "友情 >= 4"
+      }
+    ]
+  },
+  
+  "card_generation_rules": {
+    "context_matching": {
+      "story_type": {
+        "fantasy": ["魔法", "冒险", "友情"],
+        "modern": ["科技", "都市", "成长"],
+        "historical": ["传统", "智慧", "荣誉"],
+        "sci_fi": ["科技", "探索", "未来"]
+      },
+      
+      "scene_type": {
+        "combat": ["战斗", "勇气", "策略"],
+        "exploration": ["探索", "发现", "谜题"],
+        "social": ["友情", "说服", "合作"],
+        "mystery": ["调查", "推理", "秘密"]
+      }
+    },
+    
+    "dynamic_generation": {
+      "player_stats": "根据玩家当前属性调整卡牌效果",
+      "story_progress": "根据剧情进度解锁新卡牌",
+      "relationship_level": "根据角色关系生成专属卡牌"
+    }
+  }
+} 

@@ -1,0 +1,220 @@
+{
+  "card_system": {
+    "system_name": "剧情卡牌系统",
+    "version": "1.0",
+    "description": "轻量级卡牌系统，用于增强剧情互动体验",
+    "design_principles": [
+      "简单易懂，5分钟内学会",
+      "与剧情紧密结合",
+      "增强玩家选择感",
+      "支持多种剧情类型"
+    ],
+    
+    "card_types": {
+      "action_cards": {
+        "name": "行动卡",
+        "description": "代表角色可以采取的行动",
+        "examples": [
+          {
+            "name": "勇敢冲锋",
+            "type": "战斗",
+            "cost": 2,
+            "effect": "勇气+2，但可能受伤",
+            "rarity": "common"
+          },
+          {
+            "name": "巧妙潜行",
+            "type": "探索",
+            "cost": 1,
+            "effect": "避开危险，获得情报",
+            "rarity": "common"
+          },
+          {
+            "name": "魔法治愈",
+            "type": "支援",
+            "cost": 3,
+            "effect": "恢复生命值，增加友情点",
+            "rarity": "rare"
+          }
+        ]
+      },
+      
+      "character_cards": {
+        "name": "角色卡",
+        "description": "代表剧情中的重要角色",
+        "examples": [
+          {
+            "name": "艾琳",
+            "type": "伙伴",
+            "ability": "每回合增加1点友情值",
+            "special": "危机时可以牺牲自己保护主角",
+            "rarity": "rare"
+          },
+          {
+            "name": "神秘导师",
+            "type": "指导者",
+            "ability": "可以预览下一张卡牌",
+            "special": "提供关键剧情提示",
+            "rarity": "legendary"
+          }
+        ]
+      },
+      
+      "event_cards": {
+        "name": "事件卡",
+        "description": "代表剧情中的突发事件",
+        "examples": [
+          {
+            "name": "暴风雨",
+            "type": "环境",
+            "effect": "所有行动卡成本+1",
+            "duration": "本回合",
+            "rarity": "common"
+          },
+          {
+            "name": "意外发现",
+            "type": "机遇",
+            "effect": "抽取2张额外卡牌",
+            "trigger": "探索时",
+            "rarity": "uncommon"
+          }
+        ]
+      },
+      
+      "choice_cards": {
+        "name": "选择卡",
+        "description": "代表剧情分支点的关键选择",
+        "examples": [
+          {
+            "name": "拯救还是逃跑",
+            "type": "道德选择",
+            "options": [
+              {
+                "choice": "拯救伙伴",
+                "effect": "友情+3，但进入危险剧情",
+                "next_scene": "rescue_scene"
+              },
+              {
+                "choice": "战略撤退",
+                "effect": "保存实力，但友情-1",
+                "next_scene": "retreat_scene"
+              }
+            ],
+            "rarity": "story_critical"
+          }
+        ]
+      }
+    },
+    
+    "game_mechanics": {
+      "basic_rules": {
+        "hand_size": 5,
+        "max_energy": 3,
+        "energy_per_turn": 1,
+        "draw_per_turn": 1
+      },
+      
+      "win_conditions": [
+        "完成剧情目标",
+        "收集足够的剧情点数",
+        "成功通过关键选择点"
+      ],
+      
+      "resource_system": {
+        "energy": "用于打出卡牌",
+        "friendship": "影响剧情走向",
+        "courage": "解锁特殊选择",
+        "mystery": "获得隐藏信息",
+        "reputation": "影响NPC态度"
+      }
+    },
+    
+    "story_integration": {
+      "trigger_points": [
+        "章节开始前",
+        "重要选择前",
+        "危机时刻",
+        "角色互动时"
+      ],
+      
+      "card_generation": {
+        "context_based": "根据当前剧情生成相关卡牌",
+        "character_based": "根据主角属性调整卡牌效果",
+        "choice_impact": "玩家的卡牌选择影响后续剧情"
+      },
+      
+      "narrative_flow": {
+        "preparation": "卡牌阶段让玩家准备应对即将到来的剧情",
+        "decision": "通过卡牌选择影响剧情走向",
+        "consequence": "卡牌结果直接影响剧情发展"
+      }
+    },
+    
+    "ui_design": {
+      "card_layout": {
+        "style": "简洁现代，符合Apple OS美学",
+        "size": "紧凑但信息清晰",
+        "animation": "流畅的卡牌翻转和移动效果"
+      },
+      
+      "game_board": {
+        "zones": [
+          "手牌区",
+          "能量显示",
+          "剧情状态",
+          "选择结果"
+        ]
+      }
+    },
+    
+    "difficulty_scaling": {
+      "beginner": {
+        "description": "简化版本，只有行动卡和选择卡",
+        "hand_size": 3,
+        "energy": 2
+      },
+      
+      "standard": {
+        "description": "完整版本，包含所有卡牌类型",
+        "hand_size": 5,
+        "energy": 3
+      },
+      
+      "advanced": {
+        "description": "增加策略深度，更多卡牌组合",
+        "hand_size": 7,
+        "energy": 4,
+        "special_rules": "卡牌组合效果"
+      }
+    }
+  },
+  
+  "implementation_phases": {
+    "phase_1": {
+      "name": "核心系统",
+      "features": [
+        "基础卡牌类型",
+        "简单游戏规则",
+        "与剧情的基本整合"
+      ]
+    },
+    
+    "phase_2": {
+      "name": "增强体验",
+      "features": [
+        "卡牌动画效果",
+        "音效反馈",
+        "更丰富的卡牌类型"
+      ]
+    },
+    
+    "phase_3": {
+      "name": "深度整合",
+      "features": [
+        "AI生成卡牌",
+        "动态难度调整",
+        "个性化卡牌推荐"
+      ]
+    }
+  }
+} 
