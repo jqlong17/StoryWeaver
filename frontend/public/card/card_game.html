@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>魔法世界对战卡牌小游戏</title>
+    <style>
+        :root {
+            --card-width: 180px;
+            --card-height: 250px;
+        }
+        body {
+            margin: 0;
+            background: linear-gradient(120deg, #232526 0%, #414345 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.5s;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 32px 0 32px;
+            color: #ffe066;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .status-block {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .status-label {
+            color: #fff;
+            font-size: 1rem;
+            margin-right: 6px;
+        }
+        .game-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 1;
+        }
+        .background-loading {
+            position: fixed;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(120deg, #232526 0%, #414345 100%);
+            z-index: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffe066;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            transition: opacity 0.5s;
+        }
+        .background-img {
+            position: fixed;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            opacity: 0.7;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        .status-bar, .game-container { position: relative; z-index: 2; }
+        .battlefield {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 0 0 10px 0;
+        }
+        .battle-log {
+            color: #fff;
+            font-size: 1.1rem;
+            min-height: 32px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .hand {
+            min-height: 260px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 16px;
+            padding: 20px 0 10px 0;
+        }
+        .card {
+            width: var(--card-width);
+            height: var(--card-height);
+            background: #fff;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: box-shadow 0.3s, filter 0.3s, transform 0.3s cubic-bezier(.25,1.5,.5,1), z-index 0.2s;
+            position: relative;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            filter: brightness(0.98);
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .card.selected {
+            outline: 3px solid #ffe066;
+            z-index: 11;
+            transform: scale(1.08) translateY(-12px);
+        }
+        .card.unplayable {
+            filter: grayscale(0.7) brightness(0.8);
+            cursor: not-allowed;
+        }
+        .card-front {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        .card-content {
+            background: rgba(255,255,255,0.85);
+            border-radius: 0 0 16px 16px;
+            padding: 10px 14px 8px 14px;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.08);
+        }
+        .card-content h3 {
+            margin: 0 0 4px 0;
+            font-size: 1.08rem;
+            color: #333;
+            letter-spacing: 1px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.98rem;
+            color: #b8860b;
+            font-weight: bold;
+        }
+        .card-type {
+            font-size: 0.9rem;
+            color: #5c5c5c;
+            margin-bottom: 2px;
+        }
+        .loading {
+            color: #bdbdbd;
+            font-size: 1rem;
+            text-align: center;
+            width: 100%;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            z-index: 2;
+        }
+        .btn-bar {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 18px;
+        }
+        .btn {
+            background: linear-gradient(90deg, #ffe066 60%, #ffb347 100%);
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.08);
+            transition: background 0.2s, transform 0.2s;
+        }
+        .btn:disabled {
+            background: #ccc;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .effect-float {
+            position: absolute;
+            left: 50%;
+            top: 30%;
+            transform: translate(-50%, -50%);
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ff5252;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 100;
+            text-shadow: 0 2px 8px #fff, 0 0 16px #ffe066;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-loading" id="bg-loading">AI生成背景中...</div>
+    <img class="background-img" id="bg-img" style="display:none;" />
+    <div class="status-bar">
+        <div class="status-block">
+            <span class="status-label">AI 魔法师</span>
+            <span>生命: <span id="ai-hp">20</span></span>
+            <span>法力: <span id="ai-mana">1</span></span>
+        </div>
+        <div class="status-block">
+            <span class="status-label">你（人类）</span>
+            <span>生命: <span id="player-hp">20</span></span>
+            <span>法力: <span id="player-mana">1</span></span>
+        </div>
+    </div>
+    <div class="game-container">
+        <div class="battlefield">
+            <div class="battle-log" id="battle-log">游戏开始！</div>
+            <div class="effect-float" id="effect-float"></div>
+        </div>
+        <div class="hand" id="player-hand"></div>
+        <div class="btn-bar">
+            <button class="btn" id="play-btn" disabled>出牌</button>
+            <button class="btn" id="end-turn-btn">结束回合</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+    // 获取全局prompt
+    function getGlobalPrompt() {
+        const url = new URL(window.location.href);
+        return url.searchParams.get('prompt') || '';
+    }
+    const globalPrompt = getGlobalPrompt();
+
+    // 获取card_keywords
+    function getCardKeywords() {
+        const url = new URL(window.location.href);
+        const kw = url.searchParams.get('card_keywords');
+        if (!kw) return null;
+        return kw.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    // 动态生成卡牌池
+    function buildCardPool(keywords) {
+        const types = ['攻击', '治疗', '特效'];
+        return keywords.map((name, i) => {
+            let type = types[i % types.length];
+            let cost = type === '攻击' ? 2 + (i % 3) : type === '治疗' ? 2 : 1;
+            let value = type === '攻击' ? 3 + (i % 5) : type === '治疗' ? 3 + (i % 3) : 0;
+            let prompt = `魔法世界${name}卡牌插画`;
+            return { name, type, cost, value, prompt };
+        });
+    }
+    const cardKeywords = getCardKeywords();
+    const CARD_POOL = cardKeywords ? buildCardPool(cardKeywords) : [
+        { name: '火球术', type: '攻击', cost: 3, value: 5, prompt: '魔法世界火球术卡牌插画' },
+        { name: '治愈术', type: '治疗', cost: 2, value: 4, prompt: '魔法世界治愈术卡牌插画' },
+        { name: '冰锥术', type: '攻击', cost: 2, value: 3, prompt: '魔法世界冰锥术卡牌插画' },
+        { name: '魔力激荡', type: '特效', cost: 1, value: 0, prompt: '魔法世界魔力激荡卡牌插画' },
+        { name: '闪电链', type: '攻击', cost: 4, value: 7, prompt: '魔法世界闪电链卡牌插画' }
+    ];
+    // 状态
+    let player = {
+        hp: 20, mana: 1, hand: [], deck: [],
+    };
+    let ai = {
+        hp: 20, mana: 1, hand: [], deck: [],
+    };
+    let turn = 'player'; // 'player' or 'ai'
+    let selectedCardIdx = null;
+    let gameOver = false;
+
+    // 拼接卡牌图片prompt
+    function getCardPrompt(card) {
+        return (globalPrompt ? globalPrompt + ' ' : '') + card.prompt;
+    }
+
+    // 初始化牌堆
+    function shuffleDeck() {
+        let deck = [];
+        for (let i = 0; i < 2; i++) {
+            CARD_POOL.forEach(card => deck.push({ ...card }));
+        }
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        return deck;
+    }
+
+    // 获取图片
+    async function fetchCardImage(card) {
+        try {
+            const resp = await fetch('http://localhost:8000/generate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: getCardPrompt(card) })
+            });
+            const data = await resp.json();
+            return data.url || '';
+        } catch {
+            return '';
+        }
+    }
+
+    // 获取背景图片
+    async function fetchBackgroundImage() {
+        const prompt = (globalPrompt ? globalPrompt + ' ' : '') + '魔法世界背景插画';
+        try {
+            const resp = await fetch('http://localhost:8000/generate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+            const data = await resp.json();
+            return data.url || '';
+        } catch {
+            return '';
+        }
+    }
+
+    // 设置背景图片
+    async function setBackground() {
+        const bgImg = document.getElementById('bg-img');
+        const bgLoading = document.getElementById('bg-loading');
+        bgImg.style.display = 'none';
+        bgLoading.style.opacity = 1;
+        const url = await fetchBackgroundImage();
+        if (url) {
+            bgImg.src = url;
+            bgImg.onload = () => {
+                bgImg.style.display = 'block';
+                bgLoading.style.opacity = 0;
+            };
+        } else {
+            bgLoading.innerText = '背景生成失败';
+        }
+    }
+    setBackground();
+
+    // 抽牌
+    async function drawCard(who) {
+        if (who.hand.length >= 5 || who.deck.length === 0) return;
+        const card = who.deck.pop();
+        who.hand.push(card);
+        // 预加载图片
+        card.img = '';
+        fetchCardImage(card).then(url => card.img = url);
+    }
+
+    // 更新UI
+    function updateUI() {
+        document.getElementById('player-hp').innerText = player.hp;
+        document.getElementById('player-mana').innerText = player.mana;
+        document.getElementById('ai-hp').innerText = ai.hp;
+        document.getElementById('ai-mana').innerText = ai.mana;
+        // 玩家手牌
+        const hand = document.getElementById('player-hand');
+        hand.innerHTML = '';
+        player.hand.forEach((card, idx) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            if (selectedCardIdx === idx) cardEl.classList.add('selected');
+            if (card.cost > player.mana) cardEl.classList.add('unplayable');
+            cardEl.innerHTML = `
+                <div class="card-front" style="background:${card.img ? `url('${card.img}') center/cover` : '#eee'}">
+                    ${card.img ? '' : '<span class="loading">图片生成中...</span>'}
+                    <div class="card-content" style="position:absolute;bottom:0;width:100%;">
+                        <div class="card-type">${card.type}</div>
+                        <h3>${card.name}</h3>
+                        <div class="stats">
+                            <span class="cost">${card.cost}法力</span>
+                            <span class="power">${card.type === '攻击' ? card.value + '伤害' : card.type === '治疗' ? card.value + '治疗' : '特效'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (card.cost <= player.mana && !gameOver && turn === 'player') {
+                cardEl.onclick = () => {
+                    selectedCardIdx = idx;
+                    document.getElementById('play-btn').disabled = false;
+                    updateUI();
+                };
+            }
+            hand.appendChild(cardEl);
+        });
+        // 按钮
+        document.getElementById('play-btn').disabled = (selectedCardIdx === null || gameOver || turn !== 'player');
+        document.getElementById('end-turn-btn').disabled = (turn !== 'player' || gameOver);
+    }
+
+    // 战斗日志
+    function log(msg) {
+        document.getElementById('battle-log').innerText = msg;
+    }
+
+    // 飘字动画
+    function floatEffect(text, color='#ff5252') {
+        const el = document.getElementById('effect-float');
+        el.innerText = text;
+        el.style.color = color;
+        el.style.opacity = 1;
+        gsap.fromTo(el, {y:0, scale:1, opacity:1}, {y:-60, scale:1.3, opacity:0, duration:1.1, ease:'power2.out'});
+    }
+
+    // 出牌
+    function playCard() {
+        if (selectedCardIdx === null || gameOver || turn !== 'player') return;
+        const card = player.hand[selectedCardIdx];
+        if (card.cost > player.mana) return;
+        player.mana -= card.cost;
+        player.hand.splice(selectedCardIdx, 1);
+        selectedCardIdx = null;
+        // 结算效果
+        if (card.type === '攻击') {
+            ai.hp -= card.value;
+            log(`你使用了【${card.name}】，对AI造成${card.value}点伤害！`);
+            floatEffect('-' + card.value, '#ff5252');
+        } else if (card.type === '治疗') {
+            player.hp = Math.min(player.hp + card.value, 20);
+            log(`你使用了【${card.name}】，恢复${card.value}点生命！`);
+            floatEffect('+' + card.value, '#4caf50');
+        } else if (card.type === '特效') {
+            drawCard(player);
+            log(`你使用了【${card.name}】，抽了一张牌！`);
+            floatEffect('抽牌', '#2196f3');
+        }
+        checkGameOver();
+        updateUI();
+    }
+
+    // 结束回合
+    function endTurn() {
+        if (turn !== 'player' || gameOver) return;
+        turn = 'ai';
+        log('AI回合...');
+        setTimeout(aiTurn, 1200);
+        updateUI();
+    }
+
+    // AI回合
+    function aiTurn() {
+        ai.mana = Math.min(ai.mana + 1, 10);
+        drawCard(ai);
+        // AI简单策略：优先攻击，否则治疗，否则抽牌，否则跳过
+        let idx = ai.hand.findIndex(c => c.type === '攻击' && c.cost <= ai.mana);
+        if (idx === -1) idx = ai.hand.findIndex(c => c.type === '治疗' && c.cost <= ai.mana);
+        if (idx === -1) idx = ai.hand.findIndex(c => c.type === '特效' && c.cost <= ai.mana);
+        if (idx !== -1) {
+            const card = ai.hand[idx];
+            ai.mana -= card.cost;
+            ai.hand.splice(idx, 1);
+            if (card.type === '攻击') {
+                player.hp -= card.value;
+                log(`AI使用了【${card.name}】，对你造成${card.value}点伤害！`);
+                floatEffect('-' + card.value, '#ff5252');
+            } else if (card.type === '治疗') {
+                ai.hp = Math.min(ai.hp + card.value, 20);
+                log(`AI使用了【${card.name}】，恢复${card.value}点生命！`);
+                floatEffect('+' + card.value, '#4caf50');
+            } else if (card.type === '特效') {
+                drawCard(ai);
+                log(`AI使用了【${card.name}】，抽了一张牌！`);
+                floatEffect('抽牌', '#2196f3');
+            }
+        } else {
+            log('AI跳过了本回合。');
+        }
+        checkGameOver();
+        setTimeout(() => {
+            turn = 'player';
+            player.mana = Math.min(player.mana + 1, 10);
+            drawCard(player);
+            log('轮到你了！');
+            updateUI();
+        }, 1200);
+        updateUI();
+    }
+
+    // 检查胜负
+    function checkGameOver() {
+        if (player.hp <= 0 && ai.hp <= 0) {
+            log('平局！');
+            gameOver = true;
+        } else if (player.hp <= 0) {
+            log('你输了！');
+            gameOver = true;
+        } else if (ai.hp <= 0) {
+            log('你赢了！');
+            gameOver = true;
+        }
+    }
+
+    // 初始化游戏
+    async function startGame() {
+        player = { hp: 20, mana: 1, hand: [], deck: shuffleDeck() };
+        ai = { hp: 20, mana: 1, hand: [], deck: shuffleDeck() };
+        turn = 'player';
+        selectedCardIdx = null;
+        gameOver = false;
+        for (let i = 0; i < 3; i++) {
+            await drawCard(player);
+            await drawCard(ai);
+        }
+        log('游戏开始！轮到你了！');
+        updateUI();
+    }
+
+    document.getElementById('play-btn').onclick = playCard;
+    document.getElementById('end-turn-btn').onclick = endTurn;
+    startGame();
+    </script>
+</body>
+</html>

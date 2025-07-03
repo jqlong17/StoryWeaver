@@ -3,6 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 // mock InkPlus 脚本示例
 const mockScripts = [
   {
+    label: '卡牌剧情互动示例',
+    value: `// === 森林冒险的开端 ===\n\n@image[prompt: "神秘森林入口，晨雾缭绕", style: "fantasy_art", mood: "mysterious"] {\n    你站在森林的入口，阳光透过树梢，地面上铺满落叶。\n}\n\n"你准备踏入这片未知的森林。"\n\n* [直接进入森林] 你鼓起勇气，迈步前行。\n    -> deep_forest\n* [环顾四周] 你警觉地观察四周，寻找线索。\n    -> look_around\n\n=== deep_forest ===\n@image[prompt: "森林深处，光影斑驳，隐约有魔法气息", style: "fantasy_art"] {\n    森林深处，空气中弥漫着淡淡的魔法气息。\n}\n\n@card[keywords: "火球术,治愈术,荆棘缠绕", scene: "森林深处", chapter: "冒险的开始", on_win: "victory_scene", on_lose: "fail_scene"]\n\n"你在这里遭遇了神秘的魔物，是否要使用卡牌对战？"\n\n* [进入卡牌对战] -> start_card_battle\n* [暂时撤退]\n    你选择暂时撤退，回到入口。\n    -> top\n\n=== victory_scene ===\n@image[prompt: "魔物被击败，阳光洒入森林", style: "fantasy_art"] {\n    你成功击败了魔物，森林恢复了平静。\n}\n"你获得了宝贵的经验和奖励！"\n-> next_adventure\n\n=== fail_scene ===\n@image[prompt: "主角受伤撤退，森林依旧危险", style: "fantasy_art"] {\n    你被魔物击败，只能狼狈撤退。\n}\n"你需要休整后再来挑战。"\n-> top\n\n=== look_around ===\n@image[prompt: "森林边缘，发现一只受伤的小动物", style: "watercolor"] {\n    你发现一只受伤的小狐狸，正无助地看着你。\n}\n\n"你要帮助小狐狸吗？"\n\n* [帮助小狐狸] 你用随身的药草为它包扎伤口。\n    -> fox_helped\n* [离开] 你决定不管它，转身离开。\n    -> deep_forest\n\n=== fox_helped ===\n@image[prompt: "小狐狸感激地看着你，身上泛起微光", style: "watercolor"] {\n    小狐狸获得新生，似乎对你产生了好感。\n}\n\n"小狐狸成为了你的伙伴！"\n-> deep_forest\n\n=== next_adventure ===\n"你继续踏上新的冒险旅程……"\n-> END\n\n=== top ===\n// 返回入口节点\n"你又回到了森林入口。"\n-> END\n`
+  },
+  {
     label: '图片描述示例',
     value: `// === 魔法森林的邂逅 ===\n\n@image[prompt: "神秘的魔法森林，晨雾缭绕，阳光穿透树梢", style: "fantasy_art", mood: "mysterious"] {\n    清晨的魔法森林中，薄雾弥漫，阳光斑驳地洒在苔藓和蘑菇上。\n}\n\n你缓缓走进森林，四周传来鸟鸣和微风拂叶的声音。\n\n@bgm[track: "forest_morning", volume: 0.6, fade_in: 2000]\n\n突然，你发现前方有一只受伤的小鹿。\n\n@image[prompt: "受伤的小鹿，躺在森林草地上", style: "realistic", mood: "gentle"] {\n    一只小鹿静静地卧在草地上，眼神中带着一丝无助。\n}\n\n* [靠近小鹿] 你小心翼翼地走近，试图安抚它。\n    @sfx[sound: "soft_steps"]\n    小鹿微微颤抖，但没有逃跑。\n    -> deer_help\n\n* [观察四周] 你警觉地环顾四周，担心有危险潜伏。\n    @sfx[sound: "rustle"]\n    你发现附近有新鲜的狼爪印。\n    -> wolf_warning\n\n=== deer_help ===\n你用随身携带的药草为小鹿包扎伤口。\n@image[prompt: "主角为小鹿包扎伤口", style: "watercolor"]\n小鹿感激地看着你，慢慢站了起来。\n\n=== wolf_warning ===\n你提高警惕，准备应对可能出现的危险。`
   },
@@ -41,8 +45,33 @@ function parseInkplus(inkplus) {
     blocks.push({ type: 'image', params, desc });
     lastIndex = match.index + match[0].length;
   }
-  // 处理最后一段内容
-  if (lastIndex < inkplus.length) {
+  // 新增：整体提取@card[...]块
+  const cardBlockRegex = /@card\[([^\]]+)\]/g;
+  let cardLastIndex = 0;
+  let cardMatch;
+  let tempInkplus = inkplus;
+  while ((cardMatch = cardBlockRegex.exec(tempInkplus)) !== null) {
+    if (cardMatch.index > cardLastIndex) {
+      // 解析前面的内容
+      const before = tempInkplus.slice(cardLastIndex, cardMatch.index);
+      parseLinesToBlocks(before.split(/\r?\n/), blocks);
+    }
+    // 解析@card参数
+    const paramStr = cardMatch[1];
+    const params = {};
+    paramStr.split(',').forEach(pair => {
+      const [k, v] = pair.split(':').map(s => s.trim());
+      if (k && v) params[k] = v.replace(/^"|"$/g, '');
+    });
+    blocks.push({ type: 'card_jump', params });
+    cardLastIndex = cardMatch.index + cardMatch[0].length;
+  }
+  if (cardLastIndex < tempInkplus.length) {
+    const after = tempInkplus.slice(cardLastIndex);
+    parseLinesToBlocks(after.split(/\r?\n/), blocks);
+  }
+  // 处理最后一段内容（兼容@image和@card混用）
+  if (lastIndex < inkplus.length && lastIndex > cardLastIndex) {
     const after = inkplus.slice(lastIndex);
     parseLinesToBlocks(after.split(/\r?\n/), blocks);
   }
@@ -73,14 +102,19 @@ function parseLinesToBlocks(lines, blocks) {
       // 连续收集所有* 选项 + -> 跳转
       while (i < lines.length && lines[i].trim().startsWith('* ')) {
         const optLine = lines[i].trim();
-        const optMatch = optLine.match(/^\*\s+(.+)$/);
+        // 只取label内容，不拼接target
+        const optMatch = optLine.match(/^\*\s+\[([^\]]+)\]/);
+        const label = optMatch ? optMatch[1] : '';
         let target = null;
         // 查找下一行是否为->
         if (i + 1 < lines.length && lines[i + 1].trim().startsWith('->')) {
           target = lines[i + 1].trim().replace('->', '').trim();
           i++; // 跳过跳转行
+        } else if (label) {
+          // 没有->跳转时，target设为label，防止target为null
+          target = label;
         }
-        blocks.push({ type: 'choice', label: optMatch ? optMatch[1] : '', target });
+        blocks.push({ type: 'choice', label, target });
         i++;
       }
       i--; // while多加了一次
@@ -233,11 +267,12 @@ export default function App() {
           }
         }
       });
-      // 自动跳转逻辑：如果只有jump跳转或变量赋值+jump跳转
+      // 自动跳转逻辑：如果scene只有jump跳转（可能还有变量赋值和对话）
       const jumpBlocks = sceneBlocks.filter(b => b.type === 'jump');
-      const hasAutoJump = jumpBlocks.length === 1 && (nonAssign.length === 1 || nonAssign.every(b => b.type === 'jump'));
+      const choiceBlocks = sceneBlocks.filter(b => b.type === 'choice');
       
-      if (hasAutoJump) {
+      // 如果有jump且没有choice，则自动跳转
+      if (jumpBlocks.length === 1 && choiceBlocks.length === 0) {
         const target = jumpBlocks[0].text.trim();
         if (target && target !== 'END') {
           const nextIdx = blocks.findIndex(b => b.type === 'scene' && b.text.trim() === target);
@@ -279,6 +314,30 @@ export default function App() {
   // 处理选择
   const handleChoice = (target) => {
     console.log('[用户操作] 点击分支按钮，跳转目标scene:', target);
+    if (!target || typeof target !== 'string') {
+      alert('分支target无效: ' + target);
+      console.warn('[WARN] 分支target无效:', target);
+      return;
+    }
+    // 只要target为'进入卡牌对战'或'start_card_battle'，全局查找第一个@card并跳转
+    if (target === 'start_card_battle' || target === '进入卡牌对战') {
+      const cardBlock = blocks.find(b => b.type === 'card_jump');
+      if (cardBlock) {
+        const keywords = cardBlock.params.keywords || '';
+        const scene = cardBlock.params.scene || '';
+        const chapter = cardBlock.params.chapter || '';
+        const on_win = cardBlock.params.on_win || '';
+        const on_lose = cardBlock.params.on_lose || '';
+        const on_draw = cardBlock.params.on_draw || '';
+        const url = `/card/card_game.html?card_keywords=${encodeURIComponent(keywords)}&scene=${encodeURIComponent(scene)}&chapter=${encodeURIComponent(chapter)}&on_win=${encodeURIComponent(on_win)}&on_lose=${encodeURIComponent(on_lose)}&on_draw=${encodeURIComponent(on_draw)}`;
+        console.log('[DEBUG] 跳转卡牌页面:', url);
+        window.open(url, '_blank');
+      } else {
+        alert('全局未检测到@card节点，无法进入卡牌对战！');
+        console.warn('[WARN] 全局未找到@card block');
+      }
+      return;
+    }
     // 精确匹配scene节点名
     const targetIdx = blocks.findIndex(
       b => b.type === 'scene' && b.text.trim() === target.trim()
@@ -339,6 +398,37 @@ export default function App() {
       if (loadingTimer.current) clearInterval(loadingTimer.current);
     };
   }, [loading]);
+
+  // 监听卡牌页面结果
+  useEffect(() => {
+    function handleCardResult(event) {
+      if (!event.data || typeof event.data !== 'object') return;
+      if (event.data.type === 'card_battle_result') {
+        const result = event.data.result; // 'win' | 'lose' | 'draw'
+        // 查找当前@card block
+        const cardBlockIdx = blocks.findIndex(b => b.type === 'card_jump');
+        if (cardBlockIdx !== -1) {
+          const cardBlock = blocks[cardBlockIdx];
+          let targetScene = null;
+          if (result === 'win' && cardBlock.params.on_win) targetScene = cardBlock.params.on_win;
+          if (result === 'lose' && cardBlock.params.on_lose) targetScene = cardBlock.params.on_lose;
+          if (result === 'draw' && cardBlock.params.on_draw) targetScene = cardBlock.params.on_draw;
+          if (targetScene) {
+            const targetIdx = blocks.findIndex(
+              b => b.type === 'scene' && b.text.trim() === targetScene.trim()
+            );
+            if (targetIdx !== -1) {
+              setCurrentSceneIdx(targetIdx);
+              setHistory([...history, targetScene]);
+            }
+          }
+        }
+      }
+    }
+    window.addEventListener('message', handleCardResult);
+    return () => window.removeEventListener('message', handleCardResult);
+    // eslint-disable-next-line
+  }, [blocks, history]);
 
   let renderedChoice = false;
   return (
@@ -422,6 +512,29 @@ export default function App() {
                   if (b.type === 'sfx') return <div key={idx} style={{color:'#888',fontSize:12,margin:'4px 0'}}>🔊 音效：{b.text}</div>;
                   if (b.type === 'game_time') return <div key={idx} style={{color:'#888',fontSize:12,margin:'4px 0'}}>⏰ {b.text}</div>;
                   if (b.type === 'choice_style') return null;
+                  if (b.type === 'card_jump') {
+                    const keywords = b.params.keywords || '';
+                    const scene = b.params.scene || '';
+                    const chapter = b.params.chapter || '';
+                    const on_win = b.params.on_win || '';
+                    const on_lose = b.params.on_lose || '';
+                    const on_draw = b.params.on_draw || '';
+                    // 使用相对路径，传递on_win/on_lose参数
+                    const url = `/card/card_game.html?card_keywords=${encodeURIComponent(keywords)}&scene=${encodeURIComponent(scene)}&chapter=${encodeURIComponent(chapter)}&on_win=${encodeURIComponent(on_win)}&on_lose=${encodeURIComponent(on_lose)}&on_draw=${encodeURIComponent(on_draw)}`;
+                    return (
+                      <div key={idx} style={{margin:'16px 0',textAlign:'center'}}>
+                        <div style={{marginBottom:8}}>
+                          @card[keywords: "{keywords}", scene: "{scene}", chapter: "{chapter}", on_win: "{on_win}", on_lose: "{on_lose}"]
+                        </div>
+                        <div>你在这里遭遇了神秘的魔物，是否要使用卡牌对战？<br/>胜利/失败将自动进入不同剧情分支。</div>
+                        <div style={{marginTop:8}}>
+                          <button onClick={() => window.open(url, '_blank')} style={{padding:'10px 24px',fontSize:'1.1rem',borderRadius:8,background:'#3b82f6',color:'#fff',border:'none',cursor:'pointer',marginRight:12}}>
+                            进入卡牌对战
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
                   return null;
                 })}
               </div>
