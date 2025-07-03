@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -7,7 +9,7 @@ import json
 from zhipuai import ZhipuAI
 
 # 你的zhipu API Key
-ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "d970f626f5834a2182f232a15c6604f9.VfLaEaHdkNWo4wvr")
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "")
 ZHIPU_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 ZHIPU_IMAGE_API_URL = "https://open.bigmodel.cn/api/paas/v4/image/generate"
 
@@ -15,7 +17,7 @@ ZHIPU_IMAGE_API_URL = "https://open.bigmodel.cn/api/paas/v4/image/generate"
 SUPPORTED_MODELS = {
     "GLM-4-FlashX-250414": "glm-4-flashx-250414",  # 文生文
     "GLM-4-Flash": "glm-4-flash",                # 文生文（原默认）
-    "CogView-3-Flash": "cogview-3-flash",         # 文生图
+    "CogView-4": "cogview-4",         # 文生图
     "GLM-Z1-Flash": "glm-z1-flash",               # 推理模型
     "CogVideoX-Flash": "cogvideox-flash",         # 视频生成
     "GLM-4.1V-Thinking-Flash": "glm-4.1v-thinking-flash", # 视觉推理
@@ -147,7 +149,7 @@ async def generate_inkplus(req: QueryRequest):
         print("[generate_inkplus] 异常:", e)
         return {"inkplus": f"// 生成失败: {e}"}
 
-ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY") or "你的APIKey"
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "")
 client = ZhipuAI(api_key=ZHIPU_API_KEY)
 
 @app.post("/generate_image", response_model=ImageGenResponse)
